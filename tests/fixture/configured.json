@@ -1,0 +1,9 @@
+{
+  "litAnalyzer": {
+    "strict": false,
+    "rules": {
+      "no-unknown-tag-name": "warn",
+      "no-unclosed-tag": "off"
+    }
+  }
+}

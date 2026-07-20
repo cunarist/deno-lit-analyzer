@@ -1,0 +1,7 @@
+{
+  "litAnalyzer": {
+    "rules": {
+      "no-unclosed-tags": "off"
+    }
+  }
+}

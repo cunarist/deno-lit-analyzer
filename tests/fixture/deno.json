@@ -1,0 +1,12 @@
+{
+  "litAnalyzer": {
+    "strict": true
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "es2022", "dom", "dom.iterable"]
+  },
+  "imports": {
+    "lit": "npm:lit@^3.2.0"
+  }
+}
