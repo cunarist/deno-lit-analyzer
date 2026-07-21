@@ -80,6 +80,43 @@ export async function readExcludes(configPath: string): Promise<string[]> {
   return [];
 }
 
+/** The `nodeModulesDir` setting, normalized. `UNSET` means the field is absent. */
+export type NodeModulesDir = "AUTO" | "MANUAL" | "NONE" | "UNSET";
+
+// TypeScript reads the type declarations for third-party custom elements out of
+// `node_modules` on disk, never from Deno's module cache. When the setting does
+// not put them there, every imported element is an unknown tag and the run
+// checks nothing while still passing, so the value is surfaced to the caller.
+// The legacy boolean form is folded into the string values it stands for.
+/** Reads `nodeModulesDir` from a `deno.json`, normalizing the legacy boolean. */
+export async function readNodeModulesDir(
+  configPath: string,
+): Promise<NodeModulesDir> {
+  const text = await Deno.readTextFile(configPath);
+  const config = parse(text);
+  if (!isPlainObject(config)) {
+    return "UNSET";
+  }
+  for (const [key, value] of Object.entries(config)) {
+    if (key !== "nodeModulesDir") {
+      continue;
+    }
+    if (value === true) {
+      return "AUTO";
+    }
+    if (value === false || value === "none") {
+      return "NONE";
+    }
+    if (value === "auto") {
+      return "AUTO";
+    }
+    if (value === "manual") {
+      return "MANUAL";
+    }
+  }
+  return "UNSET";
+}
+
 /** Reads the `compilerOptions` object out of a parsed config, if it has one. */
 function readCompilerOptionsField(config: unknown): Map<string, unknown> {
   if (!isPlainObject(config)) {

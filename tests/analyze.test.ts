@@ -2,7 +2,7 @@ import { assert, assertEquals } from "@std/assert";
 import ts from "typescript";
 
 import { analyzeFiles, DEFAULT_RULES, type RuleConfig } from "#analyze";
-import { readCompilerOptions } from "#config";
+import { readCompilerOptions, readNodeModulesDir } from "#config";
 import { collectFiles } from "#files";
 
 const FIXTURE_CONFIG = "tests/fixture/deno.json";
@@ -22,6 +22,21 @@ Deno.test("deno.ns is dropped from lib so TypeScript keeps the rest", async () =
 Deno.test("module resolution is forced so node_modules is reachable", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
   assertEquals(options.moduleResolution, ts.ModuleResolutionKind.Bundler);
+});
+
+Deno.test("nodeModulesDir is read, and its absence reads as unset", async () => {
+  assertEquals(
+    await readNodeModulesDir("tests/fixture/node-modules-auto.json"),
+    "AUTO",
+  );
+  // The legacy boolean form is normalized so the caller has one thing to check.
+  assertEquals(
+    await readNodeModulesDir("tests/fixture/node-modules-off.json"),
+    "NONE",
+  );
+  // Pairs with the above: a fixture that never declares the field must not be
+  // mistaken for one that opts in, or the warning would never fire.
+  assertEquals(await readNodeModulesDir(FIXTURE_CONFIG), "UNSET");
 });
 
 Deno.test("a sound template reports nothing", async () => {
