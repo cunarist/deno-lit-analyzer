@@ -1,14 +1,15 @@
 import { assert, assertEquals } from "@std/assert";
 import ts from "typescript";
 
-import { analyzeFiles, DEFAULT_RULES, type RuleConfig } from "#analyze";
+import { analyzeFiles, type RuleConfig } from "#analyze";
 import { readCompilerOptions, readNodeModulesDir } from "#config";
 import { collectFiles } from "#files";
 
 const FIXTURE_CONFIG = "tests/fixture/deno.json";
 
-/** What the CLI runs with when neither a flag nor `deno.json` says otherwise. */
-const RULE_CONFIG: RuleConfig = { strict: true, rules: DEFAULT_RULES };
+// `strict` is on so the rules under test actually fire; the CLI itself defaults
+// it to false. No per-rule overrides, matching `lit-analyzer`'s presets.
+const RULE_CONFIG: RuleConfig = { strict: true, rules: {} };
 
 Deno.test("deno.ns is dropped from lib so TypeScript keeps the rest", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
@@ -67,9 +68,6 @@ Deno.test("a string bound to a union-typed property is reported", async () => {
   assert(problems[0].fileName.endsWith("tests/fixture/mismatch/usage.ts"));
 });
 
-// Neither preset raises this rule above a warning, and `DEFAULT_RULES`
-// promotes it. If the override stops being applied the problem disappears
-// silently, so the rule id is pinned here.
 Deno.test("a binding followed by a stray quote is reported", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
   const filePaths = await collectFiles(["tests/fixture/mixed"]);
@@ -79,26 +77,27 @@ Deno.test("a binding followed by a stray quote is reported", async () => {
   assert(problems[0].fileName.endsWith("tests/fixture/mixed/element.ts"));
 });
 
-// `no-unknown-tag-name` is turned off, so an undefined element is silent even
-// though the strict preset would report it.
-Deno.test("an unknown tag is not reported", async () => {
+// The strict preset reports an undefined element, and this tool leaves that
+// preset alone, so it fires here as it would in `lit-analyzer` itself.
+Deno.test("an unknown tag is reported", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
   const filePaths = await collectFiles(["tests/fixture/unknown"]);
-  assertEquals(analyzeFiles(filePaths, options, RULE_CONFIG), []);
+  const problems = analyzeFiles(filePaths, options, RULE_CONFIG);
+  assertEquals(problems.length, 1);
+  assertEquals(problems[0].ruleId, "no-unknown-tag-name");
+  assertEquals(problems[0].severity, "warning");
 });
 
-// Pairs with the test above. Without this one, an override that quietly
-// stopped being applied would look exactly like one that worked.
-Deno.test("an unknown tag is reported once the rule is turned on", async () => {
+// Pairs with the test above: a project turns the rule off through `rules`, the
+// same knob `lit-analyzer` exposes.
+Deno.test("an unknown tag is silent once the rule is turned off", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
   const filePaths = await collectFiles(["tests/fixture/unknown"]);
   const problems = analyzeFiles(filePaths, options, {
     strict: true,
-    rules: { ...DEFAULT_RULES, "no-unknown-tag-name": "error" },
+    rules: { "no-unknown-tag-name": "off" },
   });
-  assertEquals(problems.length, 1);
-  assertEquals(problems[0].ruleId, "no-unknown-tag-name");
-  assertEquals(problems[0].severity, "error");
+  assertEquals(problems, []);
 });
 
 // A path that is skipped leaves no trace in the report, so an exclude that

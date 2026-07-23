@@ -4,7 +4,7 @@ Type check Lit templates in a Deno project.
 
 The goal is to behave as much like
 [`lit-analyzer`](https://github.com/runem/lit-analyzer) as possible. Same rules,
-same messages, same output, same exit codes.
+same defaults, same messages, same output, same exit codes.
 
 `deno check` never looks inside a tagged template literal. This tool does, by
 wrapping `lit-analyzer` and feeding it TypeScript `compilerOptions` from
@@ -28,6 +28,11 @@ list in `deno.json` names. With no arguments it checks `src`. Any error exits 1;
 warnings on their own exit 0.
 
 ## Configuration
+
+> Type declarations for third-party custom elements are read from `node_modules`
+> on disk, never from Deno's module cache. Set `"nodeModulesDir": "auto"` so
+> they land where TypeScript looks; without it those elements go unchecked and
+> the tool warns on stderr.
 
 ### Rules
 
@@ -77,7 +82,7 @@ $ deno run -A jsr:@cunarist/deno-lit-analyzer --strict src
 ```
 
 ```
-error: --strict is not a flag here, declare "strict" under "litAnalyzer" in deno.json instead
+Error: --strict is not a flag here, declare "strict" under "litAnalyzer" in deno.json instead
 ```
 
 ## Why not use `lit-analyzer` directly

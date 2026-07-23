@@ -17,28 +17,24 @@ async function read(
   return options;
 }
 
-// `strict` defaults to false, the same as the upstream CLI. The fixture used
-// here declares no `litAnalyzer` field at all.
-Deno.test("the package defaults apply when nothing declares otherwise", async () => {
+// `strict` defaults to false and no rule is overridden, the same as the
+// upstream CLI. The fixture used here declares no `litAnalyzer` field at all.
+Deno.test("the defaults match the upstream CLI when nothing declares otherwise", async () => {
   const options = await read([], "tests/fixture/empty.json");
   assertEquals(options.paths, ["src"]);
   assertEquals(options.ruleConfig.strict, false);
   assertEquals(options.format, "CODE");
   assertEquals(options.maxWarnings, -1);
-  assertEquals(options.ruleConfig.rules["no-unknown-tag-name"], "off");
-  assertEquals(
-    options.ruleConfig.rules["no-unintended-mixed-binding"],
-    "error",
-  );
+  assertEquals(options.ruleConfig.rules, {});
 });
 
-Deno.test("deno.json overrides the package defaults", async () => {
+Deno.test("deno.json sets rule severities", async () => {
   const options = await read([], CONFIGURED);
   assertEquals(options.ruleConfig.strict, false);
   assertEquals(options.ruleConfig.rules["no-unknown-tag-name"], "warn");
   assertEquals(options.ruleConfig.rules["no-unclosed-tag"], "off");
-  // Untouched entries keep the package default rather than being replaced.
-  assertEquals(options.ruleConfig.rules["no-missing-import"], "off");
+  // A rule the config never names is left to the preset, not set here.
+  assertEquals(options.ruleConfig.rules["no-missing-import"], undefined);
 });
 
 Deno.test("the flags are read while deno.json is left alone", async () => {

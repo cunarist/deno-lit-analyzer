@@ -35,23 +35,6 @@ export interface RuleConfig {
   rules: LitAnalyzerRules;
 }
 
-// These are the rules whose preset severity is wrong for this tool. The `off`
-// entries resolve custom elements by walking imports and report an unknown tag
-// for every element a project registers indirectly, which is noise rather than
-// signal: one real codebase produced 156 of them against 3 genuine errors.
-// `no-unintended-mixed-binding` is a real typo the preset leaves at warning
-// level, so it is promoted instead. A project can override any of these.
-/** Rule severities this package applies before the project's own. */
-export const DEFAULT_RULES: LitAnalyzerRules = {
-  "no-unknown-tag-name": "off",
-  "no-missing-import": "off",
-  "no-unknown-attribute": "off",
-  "no-unknown-property": "off",
-  "no-unknown-slot": "off",
-  "no-property-visibility-mismatch": "off",
-  "no-unintended-mixed-binding": "error",
-};
-
 /** Type checks the `html` and `css` templates in the given files. */
 export function analyzeFiles(
   filePaths: string[],

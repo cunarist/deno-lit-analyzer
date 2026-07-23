@@ -81,22 +81,20 @@ a different route.
 
 ## Rule severities
 
-`DEFAULT_RULES` in `src/analyze.ts` layers on top of whichever preset `strict`
-selected. Six rules are `off` because they report an unknown tag for every
-element a project registers indirectly: 156 reports against 3 genuine errors on
-a real codebase. Those six are already off in the non-strict preset, so the
-entry that does the work either way is `no-unintended-mixed-binding`, promoted
-to `error` because neither preset raises it above a warning.
-
-These are defaults, not policy. `readOptions` in `src/options.ts` layers the
-project's `rules` field over them, so any of the seven can be set to something
+This tool adds no severity overrides. Each rule's default is whatever the preset
+`strict` selected gives it, exactly as in `lit-analyzer`. `readOptions` in
+`src/options.ts` layers the project's `rules` field over that preset and nothing
 else.
 
-The barrel-module explanation this file used to give was wrong. A local barrel
-(`export * from "./tag.ts"`) resolves fine, because the analyzer collects
+An earlier version shipped `DEFAULT_RULES` that turned six `no-unknown-*` rules
+off, after a real codebase produced 156 unknown-tag reports against 3 genuine
+errors. Those reports most likely came from third-party elements whose type
+declarations live only in `node_modules`, which `nodeModulesDir: "auto"` puts
+where TypeScript can read them; the warning in `src/mod.ts` now points a project
+at that setting instead of silencing the rules for everyone. A local barrel
+(`export * from "./tag.ts"`) was never the cause: the analyzer collects
 `@customElement` declarations from every source file in the program rather than
-following imports. The 156 reports most likely came from third-party elements
-whose declarations live only in `node_modules`. That has not been confirmed.
+following imports.
 
 ## Exit code
 

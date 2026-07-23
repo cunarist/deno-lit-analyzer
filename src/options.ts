@@ -5,7 +5,7 @@ import {
   type LitAnalyzerRuleSeverity,
 } from "lit-analyzer";
 
-import { DEFAULT_RULES, type RuleConfig } from "#analyze";
+import type { RuleConfig } from "#analyze";
 import { readAnalyzerField } from "#config";
 import { REPORT_FORMATS, type ReportFormat } from "#report";
 
@@ -108,7 +108,7 @@ export async function readOptions(
     paths: paths.length === 0 ? ["src"] : paths,
     ruleConfig: {
       strict: pickBoolean(declared.get("strict"), false),
-      rules: { ...DEFAULT_RULES, ...asRules(declared.get("rules")) },
+      rules: asRules(declared.get("rules")),
     },
     format: pickFormat(parsed.format),
     quiet: pickBoolean(parsed.quiet, false),
