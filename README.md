@@ -34,6 +34,24 @@ warnings on their own exit 0.
 > they land where TypeScript looks; without it those elements go unchecked and
 > the tool warns on stderr.
 
+The `imports` map in `deno.json` is honored, so an element defined behind an
+alias is followed to its definition and checked like any other. Entries whose
+target is a file become path mappings; a trailing-slash prefix maps a whole
+directory. Package specifiers such as `npm:` and `jsr:` keep their scheme and
+resolve through `node_modules`.
+
+```json
+{
+  "imports": {
+    "#shared-components/ripple": "./src/shared-components/ripple.ts",
+    "#shared-components/": "./src/shared-components/"
+  }
+}
+```
+
+> Remote (`https:`) imports are not followed. This is an upstream `lit-analyzer`
+> limit, not a TypeScript one.
+
 ### Rules
 
 Which rules run, and at what severity, is declared in `deno.json`:

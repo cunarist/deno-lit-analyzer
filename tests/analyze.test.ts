@@ -4,6 +4,7 @@ import ts from "typescript";
 import { analyzeFiles, type RuleConfig } from "#analyze";
 import { readCompilerOptions, readNodeModulesDir } from "#config";
 import { collectFiles } from "#files";
+import { readGraphPaths } from "#graph";
 
 const FIXTURE_CONFIG = "tests/fixture/deno.json";
 
@@ -43,7 +44,10 @@ Deno.test("nodeModulesDir is read, and its absence reads as unset", async () => 
 Deno.test("a sound template reports nothing", async () => {
   const options = await readCompilerOptions(FIXTURE_CONFIG);
   const filePaths = await collectFiles(["tests/fixture/good"]);
-  assertEquals(analyzeFiles(filePaths, options, RULE_CONFIG), []);
+  assertEquals(
+    analyzeFiles(filePaths, options, RULE_CONFIG),
+    [],
+  );
 });
 
 Deno.test("an unclosed tag is reported", async () => {
@@ -66,6 +70,30 @@ Deno.test("a string bound to a union-typed property is reported", async () => {
     `Type 'string' is not assignable to '"brand" | "neutral"'`,
   );
   assert(problems[0].fileName.endsWith("tests/fixture/mismatch/usage.ts"));
+});
+
+Deno.test("Deno resolves an import-map alias to a path mapping", async () => {
+  const filePaths = await collectFiles(["tests/fixture/alias"]);
+  const paths = await readGraphPaths(filePaths, FIXTURE_CONFIG);
+  // A package specifier keeps its scheme and is left to node resolution.
+  assert(!("lit" in paths));
+  // The extension is stripped so resolution can add its own back.
+  assert(paths["#aliased"]?.[0]?.endsWith("alias/tag"));
+});
+
+// Without the mapping the aliased import resolves to nothing and the element
+// reads as an unknown tag; the incompatible-type binding only fires once the
+// alias is followed to the element, so this covers resolution and checking at
+// once.
+Deno.test("an element imported through an alias is resolved and checked", async () => {
+  const options = await readCompilerOptions(FIXTURE_CONFIG);
+  const filePaths = await collectFiles(["tests/fixture/alias"]);
+  const paths = await readGraphPaths(filePaths, FIXTURE_CONFIG);
+  const resolved = { ...options, baseUrl: "tests/fixture", paths };
+  const problems = analyzeFiles(filePaths, resolved, RULE_CONFIG);
+  assertEquals(problems.length, 1);
+  assertEquals(problems[0].ruleId, "no-incompatible-type-binding");
+  assert(problems[0].fileName.endsWith("tests/fixture/alias/usage.ts"));
 });
 
 Deno.test("a binding followed by a stray quote is reported", async () => {

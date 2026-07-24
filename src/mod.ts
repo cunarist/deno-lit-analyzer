@@ -18,6 +18,7 @@ import { dirname } from "@std/path";
 import { analyzeFiles, type LitProblem } from "#analyze";
 import { readCompilerOptions, readExcludes, readNodeModulesDir } from "#config";
 import { collectFiles, normalize } from "#files";
+import { readGraphPaths } from "#graph";
 import { readOptions } from "#options";
 import { renderProgress, renderReport } from "#report";
 
@@ -41,7 +42,9 @@ async function main(): Promise<void> {
   }
 
   console.log(renderProgress(filePaths.length));
-  const found = analyzeFiles(filePaths, compilerOptions, options.ruleConfig);
+  const paths = await readGraphPaths(filePaths, CONFIG_PATH);
+  const resolved = { ...compilerOptions, baseUrl: dirname(CONFIG_PATH), paths };
+  const found = analyzeFiles(filePaths, resolved, options.ruleConfig);
   const problems = options.quiet
     ? found.filter((problem) => {
       return problem.severity === "error";
