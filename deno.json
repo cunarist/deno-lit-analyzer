@@ -1,6 +1,6 @@
 {
   "name": "@cunarist/deno-lit-analyzer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "nodeModulesDir": "auto",
   "exports": {
     ".": "./src/mod.ts"
@@ -48,6 +48,7 @@
     "#report": "./src/report.ts",
     "#analyze": "./src/analyze.ts",
     "#config": "./src/config.ts",
+    "#graph": "./src/graph.ts",
     "#files": "./src/files.ts",
     "lit-analyzer": "npm:lit-analyzer@2.0.3",
     "typescript": "npm:typescript@5.2.2",
